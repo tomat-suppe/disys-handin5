@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gRPC;
+
+option go_package = "disys-handin5/protofiles";
+
+service Auction{
+    rpc Bid(Bidder) returns (stream AuctionUpdate)
+}
+
+message Bidder {
+    int32 BidderId = 1;
+    int63 Bid = 2;
+}
+
+message AuctionUpdate {
+    int64 HighestBid = 1;
+    int32 HighestBidderId = 2;
+}
