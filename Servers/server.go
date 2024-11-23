@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bufio"
+	"context"
 	"log"
 	"net"
 	"time"
@@ -11,27 +11,26 @@ import (
 	"google.golang.org/grpc"
 )
 
-var time time
+var startTime time.Time
 
 type Server struct {
 	pb.UnimplementedAuctionServer
-	port int
+	port string
 }
 
 var server = &Server{
-	port: 50000,
+	port: "localhost:50000",
 }
 
 var backupserver = &Server{
-	port: 50000,
+	port: "localhost:50000",
 }
 
-
 func main() {
-	go TurnOnServer(server)
-	go server.Bid(args)
+	TurnOnServer(server)
+	//go server.Bid()
 
-	time := time.Now()
+	startTime = time.Now()
 }
 
 func TurnOnServer(server *Server) {
@@ -44,7 +43,7 @@ func TurnOnServer(server *Server) {
 	}
 	grpcServer := grpc.NewServer()
 
-	pb.RegisterAuctionServer(grpcServer)
+	pb.RegisterAuctionServer(grpcServer, server.UnimplementedAuctionServer)
 
 	log.Printf("Server is running on : %s ...", server.port)
 	if err := grpcServer.Serve(listener); err != nil {
@@ -52,27 +51,33 @@ func TurnOnServer(server *Server) {
 		log.Print("Now changing server...")
 		TurnOnServer(backupserver)
 	}
-	if time.Since(time) > 200 {
+	if time.Since(startTime) > 200 {
 		log.Fatalf("Failed to serve: %v", err)
 		log.Print("Now changing server...")
 		TurnOnServer(backupserver)
 	}
 }
 
-func (server *Server) Bid (ctx context.Context, bidder *pb.Bidder) (stream *pb.AuctionUpdate, error){
+func (server *Server) Bid(ctx context.Context, bidder *pb.Bidder) (stream pb.Auction_BidClient) {
 	//for{
 	input, err := stream.Recv()
 	if err != nil {
-		log.Fatalf("Server cannot update auction")
+		log.Fatalf("Server stopped working")
+	} else {
+		log.Printf("Bidder #%v has bid %v", input.HighestBidderId, input.HighestBid)
 	}
+	return nil
 	//}
 }
 
-func (server *Server) Result (ctx context.Context, bidder *pb.Bidder) (stream *pb.AuctionUpdate, error){
+func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (stream pb.Auction_ResultClient) {
 	//for{
 	input, err := stream.Recv()
 	if err != nil {
-		log.Fatalf("Server cannot update auction")
+		log.Fatalf("Server stopped working")
+	} else {
+		log.Printf("Current highest bid is %v by bidder #%v", input.WinningBid, input.WinningBidderId)
 	}
+	return nil
 	//}
 }

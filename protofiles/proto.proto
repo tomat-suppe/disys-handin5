@@ -5,14 +5,14 @@ package gRPC;
 option go_package = "disys-handin5/protofiles";
 
 service Auction{
-    rpc Bid(Bidder) returns (stream AuctionUpdate)
-    rpc Result(Bidder) return (stream ResultAuctionUpdate)
+    rpc Bid(Bidder) returns (stream AuctionUpdate);
+    rpc Result(Bidder) returns (stream ResultAuctionUpdate);
 }
 
 message Bidder {
     int32 BidderId = 1;
     string addr = 2;
-    int63 Bid = 3;
+    int64 Bid = 3;
 }
 
 message AuctionUpdate {
