@@ -4,33 +4,34 @@ import (
 	"bufio"
 	"log"
 	"net"
+	"time"
 
 	pb "disys-handin5/protofiles"
 
 	"google.golang.org/grpc"
 )
 
-var Scanner bufio.Scanner
-var HighestBid int = 0
-var FinalBid int = 0
-var TimeSteps int = 0 //maybe this needs to be an actual time component
+var time time
 
 type Server struct {
 	pb.UnimplementedAuctionServer
 	port int
 }
 
-func main() {
-	for i := 0; i < 3; i++ {
-		portNo := 50000 + i
-		server := &Server{
-			port: portNo,
-		}
-		go TurnOnServer(server)
-		//go server.Bid(args)
-	}
+var server = &Server{
+	port: 50000,
+}
 
-	//listen for bids
+var backupserver = &Server{
+	port: 50000,
+}
+
+
+func main() {
+	go TurnOnServer(server)
+	go server.Bid(args)
+
+	time := time.Now()
 }
 
 func TurnOnServer(server *Server) {
@@ -48,8 +49,30 @@ func TurnOnServer(server *Server) {
 	log.Printf("Server is running on : %s ...", server.port)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
+		log.Print("Now changing server...")
+		TurnOnServer(backupserver)
+	}
+	if time.Since(time) > 200 {
+		log.Fatalf("Failed to serve: %v", err)
+		log.Print("Now changing server...")
+		TurnOnServer(backupserver)
 	}
 }
 
-/*func (server *Server) Bid (ctx context.Context, bidder *pb.Bidder) (*pb.AuctionUpdate, error){
-}*/
+func (server *Server) Bid (ctx context.Context, bidder *pb.Bidder) (stream *pb.AuctionUpdate, error){
+	//for{
+	input, err := stream.Recv()
+	if err != nil {
+		log.Fatalf("Server cannot update auction")
+	}
+	//}
+}
+
+func (server *Server) Result (ctx context.Context, bidder *pb.Bidder) (stream *pb.AuctionUpdate, error){
+	//for{
+	input, err := stream.Recv()
+	if err != nil {
+		log.Fatalf("Server cannot update auction")
+	}
+	//}
+}

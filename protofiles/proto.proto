@@ -6,14 +6,22 @@ option go_package = "disys-handin5/protofiles";
 
 service Auction{
     rpc Bid(Bidder) returns (stream AuctionUpdate)
+    rpc Result(Bidder) return (stream ResultAuctionUpdate)
 }
 
 message Bidder {
     int32 BidderId = 1;
-    int63 Bid = 2;
+    string addr = 2;
+    int63 Bid = 3;
 }
 
 message AuctionUpdate {
     int64 HighestBid = 1;
     int32 HighestBidderId = 2;
+}
+
+message ResultAuctionUpdate{
+    bool AuctionOver = 1;
+    int64 WinningBid = 2;
+    int32 WinningBidderId = 3;
 }
