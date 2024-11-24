@@ -12,66 +12,59 @@ import (
 	"google.golang.org/grpc"
 )
 
-var Bid int64 = 0
+var BidAmount int64 = 0
 var WinningBidder int32
 var startTime time.Time
 var bidder *pb.Bidder
 
 type Server struct {
 	pb.UnimplementedAuctionServer
-	port string
 }
 
 func main() {
-	var server = &Server{
-		port: "localhost:50000",
-	}
+	var server = &Server{}
+	startTime = time.Now()
 	TurnOnServer(server)
 
-	startTime = time.Now()
 }
 
 func TurnOnServer(server *Server) {
 	//some code from previous hand-ins
-	listener, err := net.Listen("tcp", server.port)
+	listener, err := net.Listen("tcp", "localhost:50000")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	} else {
-		log.Printf("Server now listening on: %s", server.port)
+		log.Printf("Server now listening on: localhost:50000")
 	}
 	grpcServer := grpc.NewServer()
 
 	//ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	//defer cancel()
-
 	pb.RegisterAuctionServer(grpcServer, &Server{})
 
-	log.Printf("Server is running on : %s ...", server.port)
+	log.Printf("Server is running on : localhost:50000")
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 		log.Print("Now changing server...")
-		backupserver := &Server{
-			port: "localhost:50000",
-		}
+		backupserver := &Server{}
 		TurnOnServer(backupserver)
 	}
 	if time.Since(startTime) > 200 {
 		log.Fatalf("Failed to serve: %v", err)
 		log.Print("Now changing server...")
-		backupserver := &Server{
-			port: "localhost:50000",
-		}
+		backupserver := &Server{}
 		TurnOnServer(backupserver)
 	}
+
 	//go server.Bid(ctx, bidder)
 
 }
 
 func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error) {
 	if time.Since(startTime) < 500 {
-		Bid = bidder.GetBid() + 5
-		bidder.Bid = Bid
-		message := "Bid has been accepted: " + fmt.Sprint(Bid)
+		BidAmount = bidder.GetBid() + 5
+		bidder.Bid = BidAmount
+		message := "Bid has been accepted: " + fmt.Sprint(BidAmount)
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
 		}
@@ -97,10 +90,10 @@ func (server *Server) Result(bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error)
 		return ResultUpdate, nil
 	} else {
 
-		message := "!!! Auction has ended, highest bid was " + string(Bid)
+		message := "!!! Auction has ended, highest bid was " + string(BidAmount)
 		ResultUpdate := &pb.ResultAuctionUpdate{
 			AuctionOverMessage: message,
-			WinningBid:         Bid,
+			WinningBid:         BidAmount,
 			WinningBidderId:    WinningBidder,
 		}
 		return ResultUpdate, nil
