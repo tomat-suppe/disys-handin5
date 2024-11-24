@@ -48,6 +48,19 @@ func (node *Node) TurnOnClient() {
 		//node.client = pb.NewMutualExclusionClient(conn)
 }
 
+func (server *Server) Bid(ctx context.Context, bidder *pb.Bidder) (stream pb.Auction_BidClient) {
+	//Client recv, server sendmsg
+	//for{
+	input, err := stream.Recv()
+	if err != nil {
+		log.Fatalf("Server stopped working")
+	} else {
+		log.Printf("Bidder #%v has bid %v", input.HighestBidderId, input.HighestBid)
+	}
+	return nil
+	//}
+}
+
 func (Node *Node) Bid (ctx context.Context, bidder *pb.Bidder) (stream *pb.AuctionUpdate, error) {
 	Node.bid +5
 

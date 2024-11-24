@@ -58,7 +58,22 @@ func TurnOnServer(server *Server) {
 	}
 }
 
+func (server *Server) Bid(bidder *pb.Bidder, bidserver pb.Auction_BidServer) error {
+	AuctionUpdate := &pb.AuctionUpdate{
+		HighestBid:      0,
+		HighestBidderId: 0,
+	}
+
+	if err := bidserver.Send(AuctionUpdate); err != nil {
+		log.Println("Error sending auction update")
+		return err
+	}
+
+	return nil
+}
+
 func (server *Server) Bid(ctx context.Context, bidder *pb.Bidder) (stream pb.Auction_BidClient) {
+	//Client recv, server sendmsg
 	//for{
 	input, err := stream.Recv()
 	if err != nil {

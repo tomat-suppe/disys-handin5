@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package gRPC;
+
+option go_package = "disys-handin5/protofiles";
+
+service Auction{
+    rpc Bid(Bidder) returns (BidAccepted);
+    rpc Result(Bidder) returns (ResultAuctionUpdate);
+}
+
+message Bidder {
+    int32 BidderId = 1;
+    string addr = 2;
+    int64 Bid = 3;
+}
+
+message BidAccepted {
+    string acceptancemssage = 1;
+}
+
+message ResultAuctionUpdate{
+    string AuctionOverMessage = 1;
+    int64 WinningBid = 2;
+    int32 WinningBidderId = 3;
+}
