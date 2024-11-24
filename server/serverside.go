@@ -50,7 +50,7 @@ func TurnOnServer(server *Server) {
 		backupserver := &Server{}
 		TurnOnServer(backupserver)
 	}
-	if time.Since(startTime) > 200 {
+	if time.Since(startTime) > time.Minute+2 {
 		log.Fatalf("Failed to serve: %v", err)
 		log.Print("Now changing server...")
 		backupserver := &Server{}
@@ -63,7 +63,7 @@ func TurnOnServer(server *Server) {
 
 func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error) {
 	if time.Since(startTime) <= time.Minute {
-		BidAmount = bidder.GetBid() + 5
+		BidAmount = BidAmount + 5
 		//bidder.Bid = BidAmount
 		message := "Bid has been accepted: " + fmt.Sprint(BidAmount)
 		BidAccepted := &pb.BidAccepted{
