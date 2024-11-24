@@ -62,16 +62,3 @@ func main() {
 func SendBid(ctx context.Context, bidder *pb.Bidder) (bidder1 *pb.Bidder, err error) {
 	return bidder, nil
 }
-
-/*func TurnOnClient(bidder *pb.Bidder) {
-
-}*/
-/*
-func Bid(ctx context.Context, bidder *pb.Bidder) (*pb.BidAccepted, error) {
-
-}
-
-func Result(ctx context.Context, bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
-
-}
-*/

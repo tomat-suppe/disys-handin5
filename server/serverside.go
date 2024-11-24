@@ -24,6 +24,7 @@ type Server struct {
 func main() {
 	var server = &Server{}
 	startTime = time.Now()
+
 	TurnOnServer(server)
 
 }
@@ -61,9 +62,9 @@ func TurnOnServer(server *Server) {
 }
 
 func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error) {
-	if time.Since(startTime) < 500 {
+	if time.Since(startTime) <= time.Minute {
 		BidAmount = bidder.GetBid() + 5
-		bidder.Bid = BidAmount
+		//bidder.Bid = BidAmount
 		message := "Bid has been accepted: " + fmt.Sprint(BidAmount)
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
@@ -80,8 +81,8 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 }
 
 func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
-	if time.Since(startTime) < 500 {
-		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(bidder.GetBid())
+	if time.Since(startTime) <= time.Minute*2 {
+		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(BidAmount)
 		ResultUpdate := &pb.ResultAuctionUpdate{
 			AuctionOverMessage: message,
 			WinningBid:         bidder.GetBid(),
