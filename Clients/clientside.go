@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	pb "disys-handin5/proto_files"
+	pb "github.com/tomat-suppe/disys-handin5/proto_files"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

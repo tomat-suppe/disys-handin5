@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	pb "disys-handin5/proto_files"
+	pb "github.com/tomat-suppe/disys-handin5/proto_files"
 
 	"google.golang.org/grpc"
 )
@@ -40,7 +40,7 @@ func TurnOnServer(server *Server) {
 
 	//ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	//defer cancel()
-	pb.RegisterAuctionServer(grpcServer, &Server{})
+	pb.RegisterAuctionServer(grpcServer, server)
 
 	log.Printf("Server is running on : localhost:50000")
 	if err := grpcServer.Serve(listener); err != nil {
@@ -79,7 +79,7 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 	}
 }
 
-func (server *Server) Result(bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
+func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
 	if time.Since(startTime) < 500 {
 		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(bidder.GetBid())
 		ResultUpdate := &pb.ResultAuctionUpdate{
