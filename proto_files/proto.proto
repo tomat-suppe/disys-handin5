@@ -7,7 +7,6 @@ option go_package = "disys-handin5/protofiles";
 service Auction{
     rpc Bid(Bidder) returns (BidAccepted);
     rpc Result(Bidder) returns (ResultAuctionUpdate);
-    rpc SendBid(Bidder) returns (Bidder);
 }
 
 message Bidder {

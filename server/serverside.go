@@ -78,7 +78,7 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 		log.Printf("Failed to open file")
 	}
 	BidAmount := in.GetBid() + 5
-	if time.Since(startTime) <= time.Minute && BidAmount > HighestBid {
+	if time.Since(startTime) <= time.Second*30 && BidAmount > HighestBid {
 		BidAmount = in.GetBid() + 5
 		message := "Bid has been accepted: " + fmt.Sprint(BidAmount)
 		BidAccepted := &pb.BidAccepted{
@@ -89,7 +89,7 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 		file.WriteString(" --- ")
 		HighestBid = BidAmount
 		return BidAccepted, nil
-	} else if time.Since(startTime) >= time.Minute {
+	} else if time.Since(startTime) >= time.Second*30 {
 		message := "Bid has been rejected, auction over."
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
@@ -122,7 +122,7 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 	if err != nil {
 		log.Printf("Failed to open file")
 	}
-	if time.Since(startTime) <= time.Minute*2 {
+	if time.Since(startTime) <= time.Minute {
 		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(HighestBid)
 		ResultUpdate := &pb.ResultAuctionUpdate{
 			AuctionOverMessage: message,
@@ -134,7 +134,7 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 		return ResultUpdate, nil
 	} else {
 
-		message := "!!! Auction has ended, highest bid was " + string(HighestBid)
+		message := "!!! Auction has ended, highest bid was " + fmt.Sprint(HighestBid)
 		ResultUpdate := &pb.ResultAuctionUpdate{
 			AuctionOverMessage: message,
 			WinningBid:         HighestBid,
