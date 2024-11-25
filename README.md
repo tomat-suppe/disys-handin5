@@ -14,3 +14,7 @@ run 'go run backupserver.go'
 Terminal 3:
 cd clients
 run 'go run clientside.go'
+
+
+
+None of the processes close by themselves, so when done with program, press CTRL+C in all of the above terminal windows.
