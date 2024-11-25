@@ -16,6 +16,7 @@ var BidAmount int64 = 0
 var WinningBidder int32
 var startTime time.Time = time.Now()
 var bidder *pb.Bidder
+var serverCrashed bool = false
 
 type Server struct {
 	pb.UnimplementedAuctionServer
@@ -25,45 +26,48 @@ func main() {
 	var server = &Server{}
 	//startTime = time.Now()
 
+	for {
+		ListenForServerCrash(server)
+		if serverCrashed == true {
+
+			break
+		}
+	}
+	log.Printf("Backupserver is connecting...")
 	TurnOnServer(server)
 
+}
+
+func ListenForServerCrash(server *Server) {
+	//below 3 lines adapted from https://stackoverflow.com/questions/56336168/golang-check-tcp-port-open
+	timeout := time.Second
+	_, err := net.DialTimeout("tcp", "localhost:50000", timeout)
+	if err != nil {
+		serverCrashed = true
+	}
 }
 
 func TurnOnServer(server *Server) {
 	//some code from previous hand-ins
 	listener, err := net.Listen("tcp", "localhost:50000")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("Backupserver failed to listen: %v", err)
 	} else {
-		log.Printf("Server now listening on: localhost:50000")
+		log.Printf("Backupserver now listening on: localhost:50000")
 	}
-
+	defer listener.Close()
 	grpcServer := grpc.NewServer()
 
 	pb.RegisterAuctionServer(grpcServer, server)
 
-	log.Printf("Server is running on : localhost:50000")
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Printf("Failed to serve: %v", err)
-		/*log.Print("Now changing server...")
-		backupserver := &Server{}
-		TurnOnServer(backupserver)*/
-	}
-	if time.Since(startTime) >= time.Minute {
-		log.Printf("Failed to serve: %v", err)
-		log.Print("Now changing server...")
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Println("Error accepting connection:", err)
-		}
-		conn.Close()
-		/*CloseConnection(conn)
-		log.Fatalf("Failed to serve: %v", err)
-		log.Print("Now changing server...")
-		backupserver := &Server{}
-		TurnOnServer(backupserver)*/
-	}
+	log.Printf("Backupserver is running on : localhost:50000")
+	/*for {
 
+	}*/
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+
+	}
 	//go server.Bid(ctx, bidder)
 }
 
