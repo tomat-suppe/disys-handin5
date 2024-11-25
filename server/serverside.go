@@ -70,7 +70,7 @@ func TurnOnServer(server *Server) {
 }
 
 func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error) {
-	file, err := os.Create("logs/logs.txt") //doesn't work yet
+	file, err := os.OpenFile("logs/logs.txt", os.O_APPEND, 0666) //doesn't work yet
 	if err != nil {
 		log.Printf("Failed to open file")
 	}
