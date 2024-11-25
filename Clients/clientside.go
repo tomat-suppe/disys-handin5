@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	pb "github.com/tomat-suppe/disys-handin5/proto_files"
@@ -15,13 +16,10 @@ import (
 var start time.Time
 var ListOfBidders []*pb.Bidder
 
-//var Client pb.AuctionClient
-
 func main() {
 	start = time.Now()
 	addr := 50000
 	for i := 0; i < 3; i++ {
-		//addr = addr + i
 		addrString := "localhost:" + fmt.Sprint(addr)
 		bidder := &pb.Bidder{
 			BidderId: int32(i),
@@ -30,7 +28,7 @@ func main() {
 		}
 		ListOfBidders = append(ListOfBidders, bidder)
 	}
-	for i := 0; i < 50; i++ {
+	for {
 		for _, bidder := range ListOfBidders {
 			conn, err := grpc.NewClient(bidder.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
@@ -43,13 +41,12 @@ func main() {
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			//TurnOnClient(bidder)
 
-			go SendBid(ctx, bidder)
 			b, err := Client.Bid(ctx, bidder)
 			if err != nil {
 				log.Fatalf("Failed to call bid! %v", err)
 			}
+			bidder.Bid = bidder.Bid + rand.Int63n(1000)
 			log.Printf("Bidder #%v: %s", bidder.BidderId, b.GetAcceptancemssage())
 			r, err := Client.Result(ctx, bidder)
 			if err != nil {
@@ -58,10 +55,5 @@ func main() {
 			log.Printf(r.GetAuctionOverMessage())
 
 		}
-
 	}
-}
-
-func SendBid(ctx context.Context, bidder *pb.Bidder) (bidder1 *pb.Bidder, err error) {
-	return bidder, nil
 }
