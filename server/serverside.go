@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"time"
 
 	pb "github.com/tomat-suppe/disys-handin5/proto_files"
@@ -23,6 +24,7 @@ type Server struct {
 
 func main() {
 	var server = &Server{}
+
 	//startTime = time.Now()
 
 	TurnOnServer(server)
@@ -68,6 +70,10 @@ func TurnOnServer(server *Server) {
 }
 
 func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error) {
+	file, err := os.Create("logs/logs.txt") //doesn't work yet
+	if err != nil {
+		log.Printf("Failed to open file")
+	}
 	if time.Since(startTime) <= time.Minute {
 		BidAmount = BidAmount + 5
 		//bidder.Bid = BidAmount
@@ -76,17 +82,20 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 			Acceptancemssage: message,
 		}
 		WinningBidder = bidder.GetBidderId()
+		file.WriteString(message)
 		return BidAccepted, nil
 	} else {
 		message := "Bid has been rejected. Auction is over."
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
 		}
+		file.WriteString(message)
 		return BidAccepted, nil
 	}
 }
 
 func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
+
 	if time.Since(startTime) <= time.Minute*2 {
 		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(BidAmount)
 		ResultUpdate := &pb.ResultAuctionUpdate{
