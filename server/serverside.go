@@ -85,43 +85,39 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 			Acceptancemssage: message,
 		}
 		WinningBidder = bidder.GetBidderId()
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		HighestBid = BidAmount
+		file.WriteString(" --- ")
+		file.WriteString(fmt.Sprint(HighestBid))
+
 		return BidAccepted, nil
 	} else if time.Since(startTime) >= time.Second*30 {
 		message := "Bid has been rejected, auction over."
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
 		}
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		return BidAccepted, nil
 	} else if BidAmount < HighestBid || BidAmount == 0 {
 		message := "Bid has been rejected as too low: " + fmt.Sprint(BidAmount)
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
 		}
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		return BidAccepted, nil
 	} else {
 		message := "Error while receiving bid."
 		BidAccepted := &pb.BidAccepted{
 			Acceptancemssage: message,
 		}
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		return BidAccepted, nil
 	}
 }
 
 // output 'ResultActionUpdate' is my name for the required output 'outcome'
 func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.ResultAuctionUpdate, error) {
-	file, err := os.OpenFile("/tmp/logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Printf("Failed to open file")
-	}
+
 	if time.Since(startTime) <= time.Minute {
 		message := "Auction has not ended yet, current highest bid is " + fmt.Sprint(HighestBid)
 		ResultUpdate := &pb.ResultAuctionUpdate{
@@ -129,8 +125,7 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 			WinningBid:         bidder.GetBid(),
 			WinningBidderId:    bidder.GetBidderId(),
 		}
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		return ResultUpdate, nil
 	} else {
 
@@ -140,8 +135,7 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 			WinningBid:         HighestBid,
 			WinningBidderId:    WinningBidder,
 		}
-		file.WriteString(message)
-		file.WriteString(" --- ")
+
 		return ResultUpdate, nil
 	}
 }

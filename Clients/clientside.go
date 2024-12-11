@@ -30,6 +30,7 @@ func main() {
 	}
 	for {
 		for _, bidder := range ListOfBidders {
+
 			conn, err := grpc.NewClient(bidder.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 			if err != nil {
 				log.Fatalf("Did not connect: %v", err)
@@ -39,7 +40,7 @@ func main() {
 			log.Printf("Bidder #%v is acting!", bidder.BidderId)
 			Client := pb.NewAuctionClient(conn)
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
 			b, err := Client.Bid(ctx, bidder)
@@ -54,6 +55,7 @@ func main() {
 			}
 			log.Printf(r.GetAuctionOverMessage())
 
+			time.Sleep(time.Second * 2)
 		}
 	}
 }
