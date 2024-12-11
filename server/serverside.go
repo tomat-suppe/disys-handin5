@@ -28,15 +28,10 @@ func main() {
 
 	startTime = time.Now()
 
-	_, err := TurnOnServer(server)
+	TurnOnServer(server)
 
-	//with below code, I wanted the server to automatically shut down after
-	//10 seconds. It does not shut down, so you have to shut it manually, as
-	//descriped in report.
-	time.Sleep(time.Second * 10)
-	log.Printf("Failed to serve: %v", err)
-	log.Print("Now changing server...")
-	os.Exit(0)
+	//keeps server running despite the go-routine .Serve(...) in TurnOnServer
+	select {}
 }
 
 // some code from previous hand-ins
@@ -53,9 +48,19 @@ func TurnOnServer(server *Server) (net.Listener, error) {
 	pb.RegisterAuctionServer(grpcServer, server)
 
 	log.Printf("Server is running on : localhost:50000")
-	if err := grpcServer.Serve(listener); err != nil {
-		log.Printf("Failed to serve: %v", err)
-	}
+	go func() {
+		if err := grpcServer.Serve(listener); err != nil {
+			log.Printf("Failed to serve: %v", err)
+		}
+	}()
+
+	//server crashes after 10 seconds :3c
+	go func() {
+		time.Sleep(time.Second * 10)
+		log.Print("!!!Main server has crashed!!!")
+		log.Print("Now changing server...")
+		os.Exit(0)
+	}()
 	return listener, err
 }
 
