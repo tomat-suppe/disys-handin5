@@ -16,7 +16,7 @@ import (
 var BidAmount int64
 var HighestBid int64
 var WinningBidder int32
-var startTime time.Time = time.Now()
+var startTime time.Time
 var bidder *pb.Bidder
 
 type Server struct {
@@ -28,23 +28,15 @@ func main() {
 
 	startTime = time.Now()
 
-	listener, err := TurnOnServer(server)
+	_, err := TurnOnServer(server)
 
-	//below while-loop should in theory make the server crash after 15 seconds
-	//but it doesn't activate. I left it in here to show intended program,
-	//how it actually works is described in the report.
-	for {
-		if time.Since(startTime) >= time.Second*15 {
-			log.Printf("Failed to serve: %v", err)
-			log.Print("Now changing server...")
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Println("Error accepting connection:", err)
-			}
-			conn.Close()
-			break
-		}
-	}
+	//with below code, I wanted the server to automatically shut down after
+	//10 seconds. It does not shut down, so you have to shut it manually, as
+	//descriped in report.
+	time.Sleep(time.Second * 10)
+	log.Printf("Failed to serve: %v", err)
+	log.Print("Now changing server...")
+	os.Exit(0)
 }
 
 // some code from previous hand-ins
@@ -77,7 +69,9 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 	if err != nil {
 		log.Printf("Failed to open file")
 	}
+
 	BidAmount := in.GetBid() + 5
+
 	if time.Since(startTime) <= time.Second*30 && BidAmount > HighestBid {
 		BidAmount = in.GetBid() + 5
 		message := "Bid has been accepted: " + fmt.Sprint(BidAmount)
@@ -87,13 +81,13 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 		WinningBidder = bidder.GetBidderId()
 
 		HighestBid = BidAmount
-		//below 3 lines from chatgpt
+
+		fmt.Fprintf(file, "%s\n", "Highest bid was:")
+		//below 3 lines from chatgpt, write bid as string to log for readability
 		_, err = fmt.Fprintf(file, "%d\n", HighestBid)
 		if err != nil {
 			log.Fatal("Failed to write to file:", err)
 		}
-		//		file.WriteString(" --- ")
-		//		file.Write(HighestBid)
 
 		return BidAccepted, nil
 	} else if time.Since(startTime) >= time.Second*30 {

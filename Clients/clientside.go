@@ -24,7 +24,7 @@ func main() {
 		bidder := &pb.Bidder{
 			BidderId: int32(i),
 			Addr:     addrString,
-			Bid:      0,
+			Bid:      rand.Int63n(10),
 		}
 		ListOfBidders = append(ListOfBidders, bidder)
 	}
@@ -55,7 +55,7 @@ func main() {
 			}
 			log.Printf(r.GetAuctionOverMessage())
 
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second)
 		}
 	}
 }
