@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	pb "github.com/tomat-suppe/disys-handin5/proto_files"
@@ -13,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var BidAmount int64 = 0
+var BidAmount int64
 var WinningBidder int32
 var HighestBid int64 //arbitrary artificial number for the sake of running program.
 // see report for further explanation
@@ -54,6 +56,39 @@ func TurnOnServer(server *Server) {
 	//as it is right now, every bidder keeps track of their own highest bid,
 	//but there could be an issue with a bid too small being accepted, even
 	//if the logs look 'normal, because this server does not know what the previous highest bid was.
+	file, err := os.Open("/tmp/logs.txt")
+	if err != nil {
+		log.Printf("Failed to open file")
+	}
+	defer file.Close()
+	/*stat, err := file.Stat()
+	bytestoread := make([]byte, 8)
+	_, err = file.ReadAt(bytestoread, stat.Size()-8)
+
+	//4 lines code from chatgpt
+	var Bid int64
+	err = binary.Read(bytes.NewReader(bytestoread), binary.LittleEndian, &Bid)
+	if err != nil {
+		log.Fatal(err)
+	}*/
+	var BidAsString string
+
+	//scanner logic and idea of continuosly updating BidAsString until you get last string is from ChatGPT
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		BidAsString = scanner.Text()
+	}
+
+	/*	_, err = fmt.Fscanf(file, "%s\n", &BidAsString)
+		if err != nil {
+			log.Fatal("Failed to read from file:", err)
+		}
+	*/
+	HighestBid, err = strconv.ParseInt(BidAsString, 10, 64)
+	if err != nil {
+		log.Fatal("Failed to read highest bid from file:", err)
+	}
+	log.Printf("Server just crashed, highest bid from old server was %v", fmt.Sprint(HighestBid))
 
 	listener, err := net.Listen("tcp", "localhost:50000")
 	if err != nil {
@@ -73,13 +108,6 @@ func TurnOnServer(server *Server) {
 
 	}
 
-	file, err := os.OpenFile("/tmp/logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Printf("Failed to open file")
-	}
-	stat, err := file.Stat()
-	Bid, err := file.ReadAt(make([]byte, 1), stat.Size()-1)
-	BidAmount = int64(Bid)
 }
 
 // regarding the requirement about bit taking amount as arg: here 'bidder'
@@ -102,8 +130,12 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 		WinningBidder = bidder.GetBidderId()
 
 		HighestBid = BidAmount
-		file.WriteString(" --- ")
-		file.WriteString(fmt.Sprint(HighestBid))
+
+		//below 3 lines from chatgpt
+		_, err = fmt.Fprintf(file, "%d\n", HighestBid)
+		if err != nil {
+			log.Fatal("Failed to write to file:", err)
+		}
 
 		return BidAccepted, nil
 	} else if time.Since(startTime) >= time.Minute {

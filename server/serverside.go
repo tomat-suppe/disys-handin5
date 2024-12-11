@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-var BidAmount int64 = 0
-var HighestBid int64 = 0
+var BidAmount int64
+var HighestBid int64
 var WinningBidder int32
 var startTime time.Time = time.Now()
 var bidder *pb.Bidder
@@ -87,8 +87,13 @@ func (s *Server) Bid(ctx context.Context, in *pb.Bidder) (*pb.BidAccepted, error
 		WinningBidder = bidder.GetBidderId()
 
 		HighestBid = BidAmount
-		file.WriteString(" --- ")
-		file.WriteString(fmt.Sprint(HighestBid))
+		//below 3 lines from chatgpt
+		_, err = fmt.Fprintf(file, "%d\n", HighestBid)
+		if err != nil {
+			log.Fatal("Failed to write to file:", err)
+		}
+		//		file.WriteString(" --- ")
+		//		file.Write(HighestBid)
 
 		return BidAccepted, nil
 	} else if time.Since(startTime) >= time.Second*30 {
