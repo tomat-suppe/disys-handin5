@@ -37,7 +37,6 @@ func main() {
 		for _, bidder := range ListOfBidders {
 			_, err := net.DialTimeout("tcp", addr1, time.Second)
 			if err != nil {
-				log.Print("test")
 				addresses = []string{addr2}
 			}
 			bidder.Addr = addresses[rand.Intn(len(addresses))]
