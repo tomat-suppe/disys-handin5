@@ -18,7 +18,7 @@ import (
 var BidAmount int64
 var WinningBidder int32
 var HighestBid int64
-var startTime time.Time = time.Now()
+var startTime time.Time
 var bidder *pb.Bidder
 var serverCrashed bool = false
 var leader bool
@@ -78,8 +78,24 @@ func ListenForServerCrash() {
 
 				log.Printf("Highest bid from old server was %v, continuing on with the auction...", fmt.Sprint(HighestBid))
 
-				break
 			}
+			file2, err := os.Open("/tmp/logstime.txt")
+			if err != nil {
+				log.Printf("Failed to open file")
+			}
+			defer file2.Close()
+			if err == nil {
+				//scanner logic and idea of continuosly updating BidAsString
+				//until you get last string is from ChatGPT
+				var TimeAuctionHasRun time.Duration
+				scanner := bufio.NewScanner(file2)
+				for scanner.Scan() {
+					TimeAuctionHasRun, _ = time.ParseDuration(scanner.Text())
+				}
+				startTime = time.Now().Add(-TimeAuctionHasRun)
+				log.Printf("Auction had previously run %v seconds, continuing on with the auction from this time...", TimeAuctionHasRun.Seconds())
+			}
+			break
 		}
 	}
 

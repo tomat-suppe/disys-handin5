@@ -59,6 +59,17 @@ func TurnOnServer(server *Server) (net.Listener, error) {
 		time.Sleep(time.Second * 10)
 		log.Print("!!!Main server has crashed!!!")
 		log.Print("Now changing server...")
+
+		//write how far along in time the auction was
+		file, err := os.OpenFile("/tmp/logstime.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Printf("Failed to open file")
+		}
+		//below 3 lines from chatgpt, write bid as string to log for readability
+		_, err = fmt.Fprint(file, time.Since(startTime))
+		if err != nil {
+			log.Fatal("Failed to write to file:", err)
+		}
 		os.Exit(0)
 	}()
 	return listener, err
