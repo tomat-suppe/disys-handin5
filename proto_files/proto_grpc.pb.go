@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AuctionClient interface {
 	Bid(ctx context.Context, in *Bidder, opts ...grpc.CallOption) (*BidAccepted, error)
 	Result(ctx context.Context, in *Bidder, opts ...grpc.CallOption) (*ResultAuctionUpdate, error)
-	SendBid(ctx context.Context, in *Bidder, opts ...grpc.CallOption) (*Bidder, error)
+	SendUpdateToFollower(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Update, error)
 }
 
 type auctionClient struct {
@@ -49,9 +49,9 @@ func (c *auctionClient) Result(ctx context.Context, in *Bidder, opts ...grpc.Cal
 	return out, nil
 }
 
-func (c *auctionClient) SendBid(ctx context.Context, in *Bidder, opts ...grpc.CallOption) (*Bidder, error) {
-	out := new(Bidder)
-	err := c.cc.Invoke(ctx, "/gRPC.Auction/SendBid", in, out, opts...)
+func (c *auctionClient) SendUpdateToFollower(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Update, error) {
+	out := new(Update)
+	err := c.cc.Invoke(ctx, "/gRPC.Auction/SendUpdateToFollower", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *auctionClient) SendBid(ctx context.Context, in *Bidder, opts ...grpc.Ca
 type AuctionServer interface {
 	Bid(context.Context, *Bidder) (*BidAccepted, error)
 	Result(context.Context, *Bidder) (*ResultAuctionUpdate, error)
-	SendBid(context.Context, *Bidder) (*Bidder, error)
+	SendUpdateToFollower(context.Context, *Request) (*Update, error)
 	mustEmbedUnimplementedAuctionServer()
 }
 
@@ -78,8 +78,8 @@ func (UnimplementedAuctionServer) Bid(context.Context, *Bidder) (*BidAccepted, e
 func (UnimplementedAuctionServer) Result(context.Context, *Bidder) (*ResultAuctionUpdate, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Result not implemented")
 }
-func (UnimplementedAuctionServer) SendBid(context.Context, *Bidder) (*Bidder, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendBid not implemented")
+func (UnimplementedAuctionServer) SendUpdateToFollower(context.Context, *Request) (*Update, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendUpdateToFollower not implemented")
 }
 func (UnimplementedAuctionServer) mustEmbedUnimplementedAuctionServer() {}
 
@@ -130,20 +130,20 @@ func _Auction_Result_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Auction_SendBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Bidder)
+func _Auction_SendUpdateToFollower_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuctionServer).SendBid(ctx, in)
+		return srv.(AuctionServer).SendUpdateToFollower(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gRPC.Auction/SendBid",
+		FullMethod: "/gRPC.Auction/SendUpdateToFollower",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuctionServer).SendBid(ctx, req.(*Bidder))
+		return srv.(AuctionServer).SendUpdateToFollower(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -164,8 +164,8 @@ var Auction_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Auction_Result_Handler,
 		},
 		{
-			MethodName: "SendBid",
-			Handler:    _Auction_SendBid_Handler,
+			MethodName: "SendUpdateToFollower",
+			Handler:    _Auction_SendUpdateToFollower_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

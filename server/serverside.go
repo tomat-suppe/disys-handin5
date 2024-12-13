@@ -154,3 +154,16 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 		return ResultUpdate, nil
 	}
 }
+
+func (server *Server) SendUpdateToFollower(ctx context.Context, request *pb.Request) (*pb.Update, error) {
+	if request.AliveMessage {
+		return &pb.Update{
+			Bid:            HighestBid,
+			TimeSinceStart: time.Since(startTime),
+		}, nil
+	}
+	return &pb.Update{
+		Bid:            0,
+		TimeSinceStart: 0,
+	}, nil
+}
