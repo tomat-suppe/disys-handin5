@@ -1,18 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"time"
 
 	pb "github.com/tomat-suppe/disys-handin5/proto_files"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var BidAmount int64
@@ -27,10 +26,19 @@ type Server struct {
 	pb.UnimplementedAuctionServer
 }
 
+var TimeAuctionHasRun time.Duration
+
 func main() {
 	var server = &Server{}
 	leader = false
 	TurnOnServer(server)
+	for {
+		if leader {
+			break
+		}
+		ReceiveHeartBeat()
+		time.Sleep(time.Second * 2)
+	}
 
 	//keeps server running despite the go-routine .Serve(...) in TurnOnServer
 	select {}
@@ -51,50 +59,8 @@ func ListenForServerCrash() {
 		}
 		if serverCrashed {
 			leader = true
-
-			//below code regarding file is backupserver retrieving shared log file and reading
-			//what the last highest bid was before main server crashed - thus it can continue the auction
-			file, err := os.Open("/tmp/logs.txt")
-			if err != nil {
-				log.Printf("Failed to open file")
-			}
-			defer file.Close()
-
-			var BidAsString string
-
-			if err == nil {
-				//scanner logic and idea of continuosly updating BidAsString
-				//until you get last string is from ChatGPT
-				scanner := bufio.NewScanner(file)
-				for scanner.Scan() {
-					BidAsString = scanner.Text()
-				}
-
-				//converting the bid to an int64 again, as log has string entities for readability
-				HighestBid, err = strconv.ParseInt(BidAsString, 10, 64)
-				if err != nil {
-					log.Fatal("Failed to read highest bid from file:", err)
-				}
-
-				log.Printf("Highest bid from old server was %v, continuing on with the auction...", fmt.Sprint(HighestBid))
-
-			}
-			file2, err := os.Open("/tmp/logstime.txt")
-			if err != nil {
-				log.Printf("Failed to open file")
-			}
-			defer file2.Close()
-			if err == nil {
-				//scanner logic and idea of continuosly updating BidAsString
-				//until you get last string is from ChatGPT
-				var TimeAuctionHasRun time.Duration
-				scanner := bufio.NewScanner(file2)
-				for scanner.Scan() {
-					TimeAuctionHasRun, _ = time.ParseDuration(scanner.Text())
-				}
-				startTime = time.Now().Add(-TimeAuctionHasRun)
-				log.Printf("Auction had previously run %v seconds, continuing on with the auction from this time...", TimeAuctionHasRun.Seconds())
-			}
+			log.Print("...Leader has shut down, this server is now the Leader...")
+			log.Printf("Taking over with highest big: %v and time since auction start: %v", HighestBid, TimeAuctionHasRun.Seconds())
 			break
 		}
 	}
@@ -220,4 +186,30 @@ func (server *Server) Result(ctx context.Context, bidder *pb.Bidder) (*pb.Result
 
 		return ResultUpdate, nil
 	}
+}
+
+func ReceiveHeartBeat() {
+	conn, err := grpc.NewClient("localhost:50000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Did not connect: %v", err)
+	}
+
+	defer conn.Close()
+
+	Client := pb.NewAuctionClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+
+	//request a heartbeat with information from leader
+	heartbeat, err := Client.SendUpdateToFollower(ctx, &pb.Request{AliveMessage: true})
+	if err != nil {
+
+		cancel()
+	}
+	HighestBid = heartbeat.Bid
+	log.Printf("Highest bid at Leader is currently %v, this server is still in Follower state...", heartbeat.Bid)
+
+	TimeAuctionHasRun, _ = time.ParseDuration(heartbeat.TimeSinceStart)
+	startTime = time.Now().Add(-TimeAuctionHasRun)
+	log.Printf("Auction has run %v seconds, server is still in Follower state...", TimeAuctionHasRun.Seconds())
 }

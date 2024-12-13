@@ -159,11 +159,11 @@ func (server *Server) SendUpdateToFollower(ctx context.Context, request *pb.Requ
 	if request.AliveMessage {
 		return &pb.Update{
 			Bid:            HighestBid,
-			TimeSinceStart: time.Since(startTime),
+			TimeSinceStart: fmt.Sprint(time.Since(startTime)),
 		}, nil
 	}
 	return &pb.Update{
 		Bid:            0,
-		TimeSinceStart: 0,
+		TimeSinceStart: "0",
 	}, nil
 }

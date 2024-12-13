@@ -36,6 +36,7 @@ func main() {
 	for {
 		for _, bidder := range ListOfBidders {
 			_, err := net.DialTimeout("tcp", addr1, time.Second)
+			//below ensures client does not continue to request dead leader
 			if err != nil {
 				addresses = []string{addr2}
 			}
@@ -55,13 +56,21 @@ func main() {
 
 			b, err := Client.Bid(ctx, bidder)
 			if err != nil {
-				log.Fatalf("Failed to call bid! %v", err)
+				//by not using log.Fatalf(..) system is resilient to the nanoseconds
+				//where Leader dies and client might still request it for answers.
+				//when client retries, code further up will ensure it does not request
+				//the dead leader again
+				log.Print("Leader is currently offline! Try again!")
 			}
 			bidder.Bid = bidder.Bid + rand.Int63n(1000)
 			log.Printf("Bidder #%v: %s", bidder.BidderId, b.GetAcceptancemssage())
 			r, err := Client.Result(ctx, bidder)
 			if err != nil {
-				log.Fatalf("Failed to call result! %v", err)
+				//by not using log.Fatalf(..) system is resilient to the nanoseconds
+				//where Leader dies and client might still request it for answers.
+				//when client retries, code further up will ensure it does not request
+				//the dead leader again
+				log.Print("Leader is currently offline! Try again!")
 			}
 			log.Printf(r.GetAuctionOverMessage())
 
