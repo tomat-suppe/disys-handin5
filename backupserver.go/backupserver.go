@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 
 	pb "github.com/tomat-suppe/disys-handin5/proto_files"
@@ -60,6 +62,54 @@ func ListenForServerCrash() {
 		if serverCrashed {
 			leader = true
 			log.Print("...Leader has shut down, this server is now the Leader...")
+			//below code regarding file is backupserver retrieving shared log file and reading
+			//what the last highest bid was before main server crashed - thus it can continue the auction
+			file, err := os.Open("/tmp/logs.txt")
+			if err != nil {
+				log.Printf("Failed to open file")
+			}
+			defer file.Close()
+
+			var HighestBidFromLog int64
+			var BidAsString string
+			var TimeAuctionHasRunLogs time.Duration
+
+			if err == nil {
+				//scanner logic and idea of continuosly updating BidAsString
+				//until you get last string is from ChatGPT
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					BidAsString = scanner.Text()
+				}
+
+				//converting the bid to an int64 again, as log has string entities for readability
+				HighestBidFromLog, err = strconv.ParseInt(BidAsString, 10, 64)
+				if err != nil {
+					log.Printf("Failed to read highest bid from file:", err)
+				}
+			}
+			file2, err := os.Open("/tmp/logstime.txt")
+			if err != nil {
+				log.Printf("Failed to open file")
+			}
+			defer file2.Close()
+			if err == nil {
+				//scanner logic and idea of continuosly updating BidAsString
+				//until you get last string is from ChatGPT
+				var TimeAuctionHasRunLogs time.Duration
+				scanner := bufio.NewScanner(file2)
+				for scanner.Scan() {
+					TimeAuctionHasRunLogs, _ = time.ParseDuration(scanner.Text())
+				}
+				startTime = time.Now().Add(-TimeAuctionHasRunLogs)
+			}
+
+			if HighestBidFromLog > HighestBid {
+				HighestBid = HighestBidFromLog
+			}
+			if TimeAuctionHasRunLogs > TimeAuctionHasRun {
+				TimeAuctionHasRun = TimeAuctionHasRunLogs
+			}
 			log.Printf("Taking over with highest bid: %v and time since auction start: %v", HighestBid, TimeAuctionHasRun.Seconds())
 			break
 		}
