@@ -60,7 +60,7 @@ func ListenForServerCrash() {
 		if serverCrashed {
 			leader = true
 			log.Print("...Leader has shut down, this server is now the Leader...")
-			log.Printf("Taking over with highest big: %v and time since auction start: %v", HighestBid, TimeAuctionHasRun.Seconds())
+			log.Printf("Taking over with highest bid: %v and time since auction start: %v", HighestBid, TimeAuctionHasRun.Seconds())
 			break
 		}
 	}
