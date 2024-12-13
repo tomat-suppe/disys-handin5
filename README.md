@@ -5,7 +5,7 @@ Open 3 terminals.
 Terminal 1:
 cd server
 run 'go run serverside.go'
-(to simulate crash, press CTRL+C in the terminal window)
+(crashes after 10 seconds - this is a feature, read report for details)
 
 Terminal 2:
 cd backupserver
@@ -17,4 +17,6 @@ run 'go run clientside.go'
 
 
 
-None of the processes close by themselves, so when done with program, press CTRL+C in all of the above terminal windows.
+When done with program (and client has received 'Auction is over message'), press CTRL+C in backupserver and clientside  terminal windows to terminate the program for good.
+
+Inspect logs with 'cat /tmp/logs.txt' and 'cat /tmp/logstime.txt'.
